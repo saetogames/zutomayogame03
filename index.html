@@ -1,0 +1,146 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>zutomayo-minigame-03</title>
+    <script src="phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+<script type="text/javascript">
+
+class Example extends Phaser.Scene {
+    constructor() {
+        super();
+    }
+
+    preload() {
+        this.load.image('wall', 'assets/platform.png');
+        this.load.spritesheet('tiles', 'assets/fantasy-tiles.png', { frameWidth: 64, frameHeight: 64 });
+        this.load.spritesheet('uni', 'assets/uni.png', { frameWidth: 283, frameHeight: 300 });
+        this.load.spritesheet('disk0', 'image/supply0.png', { frameWidth: 50, frameHeight: 50 });
+        this.load.spritesheet('disk1', 'image/supply1.png', { frameWidth: 50, frameHeight: 50 });
+        this.load.spritesheet('disk2', 'image/supply2.png', { frameWidth: 50, frameHeight: 50 });
+        this.load.spritesheet('disk3', 'image/supply3.png', { frameWidth: 50, frameHeight: 50 });
+        this.load.spritesheet('disk4', 'image/supply4.png', { frameWidth: 50, frameHeight: 50 });
+        this.load.spritesheet('gusare1', 'image/gusare1.png', { frameWidth: 50, frameHeight: 65 });
+        this.load.spritesheet('gusare2', 'image/gusare2.png', { frameWidth: 40, frameHeight: 40 });
+    }
+
+    create() {
+        this.score = 0;
+        this.restart = false;
+
+        this.wall = this.physics.add.sprite(0, 600, 'wall').setScale(16,1);
+        this.wall.body.allowGravity= false;
+        this.wall.setCollideWorldBounds(true);
+        this.ground = this.add.tileSprite(0, 536, 800, 64, 'tiles', 1).setOrigin(0);
+        this.uni = this.physics.add.sprite(240, 460, 'uni').setScale(0.5);
+        this.uni.clearTint();
+
+        this.uni.body.allowGravity= true;
+        this.anims.create({
+            key: 'run',
+            frames: this.anims.generateFrameNumbers('uni', { start: 0, end: 5}),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.uni.play('run');
+
+        this.ground.collideUp = true;
+        this.physics.add.collider(this.uni, this.wall);
+
+        this.input.on('pointerdown', function (pointer) {
+            if (this.uni.body.touching.down) {
+                this.uni.setVelocityY(-900);
+            }
+            if (this.restart) {
+                this.registry.destroy();
+                this.events.off();
+                this.scene.restart();
+            }
+        }, this);
+
+        this.disks = this.physics.add.group(
+            {allowGravity: false}
+        );
+        var disk0 = this.disks.create(800, 300, 'disk0');
+        var disk1 = this.disks.create(1200, 500, 'disk1');
+        var disk2 = this.disks.create(1600, 500, 'disk2');
+        var disk3 = this.disks.create(2000, 500, 'disk3');
+        var disk4 = this.disks.create(2400, 300, 'disk4');
+        this.physics.add.overlap(this.uni, this.disks, this.collectDisk, null, this);
+
+        this.gusare1 = this.physics.add.sprite(3000, 300, 'gusare1');
+        this.gusare2 = this.physics.add.sprite(3600, 300, 'gusare2');
+        this.gusare1.body.allowGravity= false;
+        this.gusare2.body.allowGravity= false;
+        this.physics.add.overlap(this.uni, this.gusare1, this.collectGusare1, null, this);
+        this.physics.add.overlap(this.uni, this.gusare2, this.collectGusare2, null, this);
+    }
+
+    update() {
+        if (this.restart) {
+            return;
+        }
+
+        this.disks.setVelocityX(-600);
+        this.gusare1.setVelocityX(-600);
+        this.gusare2.setVelocityX(-600);
+        this.ground.tilePositionX += 10;
+
+        if (this.ground.tilePositionX >= 3800) {
+            if (this.score === 7) {
+                this.scoreText = this.add.text(120, 20, 'GUSARE\nRelease!!', { font: 'bold 96pt Arial', fill: '#000' });
+            } else {
+                this.scoreText = this.add.text(120, 20, 'Failed...', { font: 'bold 64pt Arial', fill: '#000' });
+            }
+            this.add.text(360, 480, 'やり直す場合は画面をタップ', { font: '24pt Arial', fill: '#FFF' });
+            this.restart = true;
+            this.uni.stop();
+        }
+    }
+
+    collectDisk(uni, disk) {
+        disk.disableBody(true, true);
+        this.score = this.score + 1;
+    }
+
+    collectGusare1(uni, gusare1) {
+        gusare1.disableBody(true, true);
+        this.score = this.score + 1;
+        uni.setTint(0xff0000);
+    }
+
+    collectGusare2(uni, gusare2) {
+        gusare2.disableBody(true, true);
+        this.score = this.score + 1;
+        uni.setScale(0.8);
+    }
+}
+
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    backgroundColor: '#67c4d2',
+    pixelArt: true,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 2000 },
+            debug: false
+        }
+    },
+    scene: [ Example ]
+};
+
+const game = new Phaser.Game(config);
+
+</script>
+</body>
+</html>
